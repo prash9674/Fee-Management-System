@@ -10,24 +10,10 @@ public class Receipt {
     @Id
     private String orderId;
     private String studentId;
-
-    public Receipt(String orderId, String studentId, double amountPaid, double totalFee, LocalDateTime date, String status) {
-        this.orderId = orderId;
-        this.studentId = studentId;
-        this.amountPaid = amountPaid;
-        this.totalFee = totalFee;
-        this.date = date;
-        this.status = status;
-    }
-
     private double amountPaid;
     private double totalFee;
     private LocalDateTime date;
     private String status; // "PAID", "PARTIAL"
-
-    public Receipt() {
-
-    }
 
     public String getOrderId() {
         return orderId;
@@ -45,8 +31,8 @@ public class Receipt {
         this.studentId = studentId;
     }
 
-    public double getAmountPaid(double amountPaid) {
-        return this.amountPaid;
+    public double getAmountPaid() {
+        return amountPaid;
     }
 
     public void setAmountPaid(double amountPaid) {
@@ -76,4 +62,22 @@ public class Receipt {
     public void setStatus(String status) {
         this.status = status;
     }
+
+
+
+    public Receipt(String orderId, String studentId, double amountPaid, double totalFee, LocalDateTime date, String status) {
+        this.orderId = orderId;
+        this.studentId = studentId;
+        this.amountPaid = amountPaid;
+        this.totalFee = totalFee;
+        this.date = date;
+        this.status = status;
+    }
+
+
+
+    public Receipt() {
+
+    }
+
 }

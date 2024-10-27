@@ -18,37 +18,58 @@ public class PaymentService {
     }
 
     public Payment processPayment(String studentId, double amount, double totalFee) {
-        Payment payment = paymentRepository.findByStudentId(studentId)
-                .stream()
-                .findFirst()
-                .orElse(new Payment());
+        String orderId = "REC-" + System.currentTimeMillis();
+        List<Payment> existingPayments = paymentRepository.findByStudentId(studentId);
 
-        payment.setStudentId(studentId);
-        payment.setTotalFee(totalFee);
+        Payment payment;
+        String message;
 
-        double newAmountPaid = payment.getAmountPaid() + amount;
-        payment.setAmountPaid(newAmountPaid);
-        payment.setTimestamp(LocalDateTime.now());
+        if (!existingPayments.isEmpty()) {
+            payment = existingPayments.get(0);
+            double newAmountPaid = payment.getAmountPaid() + amount;
+            payment.setAmountPaid(newAmountPaid);
 
-        // Determine payment status based on the balance
-        if (newAmountPaid >= totalFee) {
-            payment.setStatus("PAID");
+            if (newAmountPaid >= totalFee) {
+                payment.setStatus("PAID");
+                message = "Course fee paid in full.";
+            } else {
+                payment.setStatus("PARTIAL");
+                message = "Partial payment processed. Remaining balance: " + (totalFee - newAmountPaid);
+            }
+
+            payment.setTimestamp(LocalDateTime.now());
+            payment.setOrderId(orderId); // Ensure to update orderId if necessary
         } else {
-            payment.setStatus("PARTIAL");
-        }
-        //generate Receipt
-        payment.setOrderId("REC-" + System.currentTimeMillis());
+            payment = new Payment();
+            payment.setStudentId(studentId);
+            payment.setTotalFee(totalFee);
+            payment.setAmountPaid(amount);
+            payment.setTimestamp(LocalDateTime.now());
 
-        //Populate receipts collection
-        Receipt r = new Receipt();
-        r.setStudentId(payment.getStudentId());
-        r.setOrderId(payment.getOrderId());
-        r.setDate(LocalDateTime.now());
-        r.setStatus(payment.getStatus());
-        r.setTotalFee(payment.getTotalFee());
-        r.getAmountPaid(payment.getAmountPaid());
-        receiptRepository.save(r);
-        //populate payments collection
+            if (amount >= totalFee) {
+                payment.setStatus("PAID");
+                message = "Course fee paid in full.";
+            } else {
+                payment.setStatus("PARTIAL");
+                message = "Partial payment processed. Remaining balance: " + (totalFee - amount);
+            }
+
+            payment.setOrderId(orderId);
+        }
+
+        // Set the message in the payment object
+        payment.setMessage(message); // Set the message here
+
+        Receipt receipt = new Receipt();
+        receipt.setStudentId(payment.getStudentId());
+        receipt.setOrderId(payment.getOrderId());
+        receipt.setDate(LocalDateTime.now());
+        receipt.setStatus(payment.getStatus());
+        receipt.setTotalFee(payment.getTotalFee());
+        receipt.setAmountPaid(payment.getAmountPaid());
+
+        receiptRepository.save(receipt);
+
         return paymentRepository.save(payment);
     }
 

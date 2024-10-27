@@ -11,7 +11,18 @@ public class Payment {
     private String id;
     private String orderId;
     private String studentId;
-    private double amountPaid;  // Total amount paid so far
+    private double amountPaid;
+    private String message;// Total amount paid so far
+
+    public String getMessage() {
+        return message;
+    }
+
+    public void setMessage(String message) {
+        this.message = message;
+    }
+
+
 
     public Payment(String id, String orderId, String studentId, double amountPaid, double totalFee, String status, LocalDateTime timestamp) {
         this.id = id;
