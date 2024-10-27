@@ -1,25 +1,26 @@
 package com.fee.management.controllers;
 
+import com.fee.management.models.FeeDetails;
+import com.fee.management.models.Receipt;
+import com.fee.management.services.ReceiptService;
+import com.fee.management.services.UserService;
+import io.swagger.v3.oas.annotations.Hidden;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
-import com.fee.management.models.Receipt;
-import com.fee.management.services.ReceiptService;
-
+import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/v1/receipts")
 public class ReceiptController {
+    private final ReceiptService receiptService;
 
-    @Autowired
-    private ReceiptService receiptService;
+    public ReceiptController(ReceiptService receiptService, UserService userService) {
+        this.receiptService = receiptService;
+    }
 
     @Operation(
             summary = "Fetch receipt details",
@@ -30,11 +31,8 @@ public class ReceiptController {
             }
     )
     @GetMapping("/{orderId}")
-    public ResponseEntity<Receipt> fetchReceiptDetails(@PathVariable String orderId) {
-        Receipt receipt = receiptService.getReceiptByOrderId(orderId);
-        if (receipt == null) {
-            return ResponseEntity.notFound().build();
-        }
-        return ResponseEntity.ok(receipt);
+    public ResponseEntity<Receipt> getReceiptByOrderId(@PathVariable String orderId) {
+        Optional<Receipt> receipt = receiptService.getReceiptByOrderId(orderId);
+        return receipt.map(ResponseEntity::ok).orElse(ResponseEntity.notFound().build());
     }
 }

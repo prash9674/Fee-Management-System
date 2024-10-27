@@ -1,60 +1,68 @@
 package com.fee.management.models;
 
+import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.mapping.Document;
+
+
+@Document(collection = "users")
 public class User {
-    
-    private String id;
+    @Id
+    private String userId; //Student
     private String name;
-    private String role;// Student or Admin
-    private String email;
-    private String contactNumber;
-    private boolean isActive = true;
 
-    //Constructor
-    public User(String id, String name, String role, String email, String contactNumber,
-            boolean isActive) {
-        this.id = id;
-
+    public User(String userId, String name, String email, String courseName, Long contactNo) {
+        this.userId = userId;
         this.name = name;
-        this.role = role;
         this.email = email;
-        this.contactNumber = contactNumber;
-        this.isActive = isActive;
+        this.courseName = courseName;
+        this.contactNo = contactNo;
     }
-    public String getId() {
-        return id;
+
+    private String email;
+    private String courseName;
+
+    public String getCourseName() {
+        return courseName;
     }
-    public void setId(String id) {
-        this.id = id;
+
+    public void setCourseName(String courseName) {
+        this.courseName = courseName;
     }
-    public String getName() {
-        return name;
+
+
+
+    public Long getContactNo() {
+        return contactNo;
     }
-    public void setName(String name) {
-        this.name = name;
+
+    public void setContactNo(Long contactNo) {
+        this.contactNo = contactNo;
     }
-    public String getRole() {
-        return role;
-    }
-    public void setRole(String role) {
-        this.role = role;
-    }
+
+    private Long contactNo;
+
     public String getEmail() {
         return email;
     }
+
     public void setEmail(String email) {
         this.email = email;
     }
-    public String getContactNumber() {
-        return contactNumber;
+
+    public String getName() {
+        return name;
     }
-    public void setContactNumber(String contactNumber) {
-        this.contactNumber = contactNumber;
+
+    public void setName(String name) {
+        this.name = name;
     }
-    public boolean isActive() {
-        return isActive;
+
+    public String getUserId() {
+        return userId;
     }
-    public void setActive(boolean isActive) {
-        this.isActive = isActive;
+
+    public void setUserId(String userId) {
+        this.userId = userId;
     }
 
 }

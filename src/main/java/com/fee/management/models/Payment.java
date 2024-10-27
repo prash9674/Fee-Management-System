@@ -5,27 +5,29 @@ import org.springframework.data.mongodb.core.mapping.Document;
 
 import java.time.LocalDateTime;
 
-@Document(collection = "receipts")
-public class Receipt {
+@Document(collection = "payments")
+public class Payment {
     @Id
+    private String id;
     private String orderId;
     private String studentId;
+    private double amountPaid;  // Total amount paid so far
 
-    public Receipt(String orderId, String studentId, double amountPaid, double totalFee, LocalDateTime date, String status) {
+    public Payment(String id, String orderId, String studentId, double amountPaid, double totalFee, String status, LocalDateTime timestamp) {
+        this.id = id;
         this.orderId = orderId;
         this.studentId = studentId;
         this.amountPaid = amountPaid;
         this.totalFee = totalFee;
-        this.date = date;
         this.status = status;
+        this.timestamp = timestamp;
     }
 
-    private double amountPaid;
-    private double totalFee;
-    private LocalDateTime date;
-    private String status; // "PAID", "PARTIAL"
+    private double totalFee;    // Total fee for the student/course
+    private String status;      // "PARTIAL", "PAID"
+    private LocalDateTime timestamp;
 
-    public Receipt() {
+    public Payment() {
 
     }
 
@@ -37,6 +39,16 @@ public class Receipt {
         this.orderId = orderId;
     }
 
+
+
+    public String getId() {
+        return id;
+    }
+
+    public void setId(String id) {
+        this.id = id;
+    }
+
     public String getStudentId() {
         return studentId;
     }
@@ -45,8 +57,8 @@ public class Receipt {
         this.studentId = studentId;
     }
 
-    public double getAmountPaid(double amountPaid) {
-        return this.amountPaid;
+    public double getAmountPaid() {
+        return amountPaid;
     }
 
     public void setAmountPaid(double amountPaid) {
@@ -61,19 +73,25 @@ public class Receipt {
         this.totalFee = totalFee;
     }
 
-    public LocalDateTime getDate() {
-        return date;
-    }
-
-    public void setDate(LocalDateTime date) {
-        this.date = date;
-    }
-
     public String getStatus() {
         return status;
     }
 
     public void setStatus(String status) {
         this.status = status;
+    }
+
+    public LocalDateTime getTimestamp() {
+        return timestamp;
+    }
+
+    public void setTimestamp(LocalDateTime timestamp) {
+        this.timestamp = timestamp;
+    }
+
+
+
+    public double getRemainingBalance() {
+        return totalFee - amountPaid;
     }
 }

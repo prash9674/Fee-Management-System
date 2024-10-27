@@ -1,18 +1,51 @@
 package com.fee.management.services;
 
-import org.springframework.stereotype.Service;
-
+import com.fee.management.models.FeeDetails;
+import com.fee.management.models.Payment;
 import com.fee.management.models.User;
 
-@Service
-public class UserService { //Mock Service to create users
+import com.fee.management.repositories.UserRepository;
+import org.springframework.stereotype.Service;
 
-    public User getUserDetails(String userId) {
-        // Mocking user details based on userId
-        return switch (userId) {
-            case "12345" -> new User("12345", "Prashant Kumar", "student", "prashant@example.com", "9765432145", true);
-            case "admin" -> new User("admin", "Administrator", "admin", "admin@example.com", "8765432156", true);
-            default -> null;
-        }; // Return null if user not found
+import java.util.List;
+import java.util.Optional;
+
+@Service
+public class UserService {
+    private final UserRepository userRepository;
+    private final PaymentService paymentService;
+
+    public UserService(UserRepository userRepository, PaymentService paymentService) {
+        this.userRepository = userRepository;
+        this.paymentService = paymentService;
+    }
+
+    public Optional<User> getUserById(String userId) {
+        return userRepository.findById(userId);
+    }
+
+    public User createUser(User user) {
+        return userRepository.save(user);
+    }
+
+    public Optional<FeeDetails> getFeeDetailsByUserId(String userId) {
+        Optional<User> user = userRepository.findById(userId);
+        if (user.isEmpty()) {
+            return Optional.empty();
+        }
+
+        List<Payment> payments = paymentService.getPaymentsByStudentId(userId);
+
+        if (payments.isEmpty()) {
+            return Optional.of(new FeeDetails(0, 0, 0, "UNPAID"));
+        }
+
+        Payment payment = payments.get(0);
+        double totalFee = payment.getTotalFee();
+        double amountPaid = payment.getAmountPaid();
+        double remainingBalance = payment.getRemainingBalance();
+        String status = payment.getStatus();
+
+        return Optional.of(new FeeDetails(totalFee, amountPaid, remainingBalance, status));
     }
 }

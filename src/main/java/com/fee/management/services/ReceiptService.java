@@ -1,26 +1,20 @@
 package com.fee.management.services;
 
-import java.time.LocalDate;
-
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
-
-import com.fee.management.models.FeeDetails;
 import com.fee.management.models.Receipt;
 import com.fee.management.repositories.ReceiptRepository;
+import org.springframework.stereotype.Service;
+
+import java.time.LocalDateTime;
+import java.util.Optional;
 
 @Service
 public class ReceiptService {
-    @Autowired
-    private ReceiptRepository receiptRepository;
+    private final ReceiptRepository receiptRepository;
 
-    public Receipt createReceipt(FeeDetails payment) {
-        Receipt receipt = new Receipt(payment.getReceiptId(), payment.getStudentId(), payment.getAmount(),LocalDate.now().toString());
-        return receiptRepository.save(receipt);
+    public ReceiptService(ReceiptRepository receiptRepository) {
+        this.receiptRepository = receiptRepository;
     }
-
-    public Receipt getReceiptByOrderId(String orderId) {
+    public Optional<Receipt> getReceiptByOrderId(String orderId) {
         return receiptRepository.findByOrderId(orderId);
     }
-
 }

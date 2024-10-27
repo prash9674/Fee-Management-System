@@ -1,6 +1,5 @@
 package com.fee.management.services;
 
-import com.fee.management.models.FeeDetails;
 import com.fee.management.models.Receipt;
 import com.fee.management.repositories.ReceiptRepository;
 import com.fee.management.services.ReceiptService;
@@ -10,12 +9,12 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
-import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.util.Optional;
+
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
-
 public class ReceiptServiceTest {
-
     @Mock
     private ReceiptRepository receiptRepository;
 
@@ -23,89 +22,37 @@ public class ReceiptServiceTest {
     private ReceiptService receiptService;
 
     @BeforeEach
-    void setUp() {
-        MockitoAnnotations.openMocks(this); // Initialize mocks
+    public void setup() {
+        MockitoAnnotations.openMocks(this);
     }
 
     @Test
-    void testCreateReceipt_Success() {
-        // Arrange
-        FeeDetails paymentData = new FeeDetails();
-        paymentData.setReceiptId("REC12345");
-        paymentData.setStudentId("12345");
-        paymentData.setAmount(1000.0);
+    public void testGetReceiptByOrderId_ReceiptExists() {
+        // Arrange: Prepare a sample receipt
+        String orderId = "REC-1730033114686";
+        Receipt receipt = new Receipt(orderId,"abc",4000.0,4000.0, LocalDateTime.now(),"PAID");
+        when(receiptRepository.findByOrderId(orderId)).thenReturn(Optional.of(receipt));
 
-        Receipt expectedReceipt = new Receipt("REC12345", "12345", 1000.0, LocalDate.now().toString());
+        // Act: Call the method under test
+        Optional<Receipt> foundReceipt = receiptService.getReceiptByOrderId(orderId);
 
-        // Mock the behavior of receiptRepository
-        when(receiptRepository.save(any(Receipt.class))).thenReturn(expectedReceipt);
-
-        // Act
-        Receipt actualReceipt = receiptService.createReceipt(paymentData);
-
-        // Assert
-        assertNotNull(actualReceipt);
-        assertEquals(expectedReceipt.getOrderId(), actualReceipt.getOrderId());
-        assertEquals(expectedReceipt.getStudentId(), actualReceipt.getStudentId());
-        assertEquals(expectedReceipt.getAmount(), actualReceipt.getAmount());
-        assertEquals(expectedReceipt.getReceiptDate(), actualReceipt.getReceiptDate());
-        verify(receiptRepository, times(1)).save(any(Receipt.class));
-    }
-
-    @Test
-    void testCreateReceipt_Failure() {
-        // Arrange
-        FeeDetails paymentData = new FeeDetails();
-        paymentData.setReceiptId("REC12345");
-        paymentData.setStudentId("12345");
-        paymentData.setAmount(1000.0);
-
-        // Mock the behavior of receiptRepository to throw an exception
-        when(receiptRepository.save(any(Receipt.class))).thenThrow(new RuntimeException("Failed to save receipt"));
-
-        // Act & Assert
-        RuntimeException exception = assertThrows(RuntimeException.class, () -> {
-            receiptService.createReceipt(paymentData);
-        });
-
-        assertEquals("Failed to save receipt", exception.getMessage());
-        verify(receiptRepository, times(1)).save(any(Receipt.class));
-    }
-
-    @Test
-    void testGetReceiptByOrderId_Success() {
-        // Arrange
-        String orderId = "REC12345";
-        Receipt expectedReceipt = new Receipt("REC12345", "12345", 1000.0, LocalDate.now().toString());
-
-        // Mock the behavior of receiptRepository
-        when(receiptRepository.findByOrderId(orderId)).thenReturn(expectedReceipt);
-
-        // Act
-        Receipt actualReceipt = receiptService.getReceiptByOrderId(orderId);
-
-        // Assert
-        assertNotNull(actualReceipt);
-        assertEquals(expectedReceipt.getOrderId(), actualReceipt.getOrderId());
-        assertEquals(expectedReceipt.getStudentId(), actualReceipt.getStudentId());
-        assertEquals(expectedReceipt.getAmount(), actualReceipt.getAmount());
-        assertEquals(expectedReceipt.getReceiptDate(), actualReceipt.getReceiptDate());
+        // Assert: Verify the result
+        assertTrue(foundReceipt.isPresent());
+        assertEquals(orderId, foundReceipt.get().getOrderId());
         verify(receiptRepository, times(1)).findByOrderId(orderId);
     }
 
     @Test
-    void testGetReceiptByOrderId_NotFound() {
-        // Arrange
-        String orderId = "REC12345";
+    public void testGetReceiptByOrderId_ReceiptDoesNotExist() {
+        // Arrange: Mock the receiptRepository to return an empty Optional
+        String orderId = "12345";
+        when(receiptRepository.findByOrderId(orderId)).thenReturn(Optional.empty());
 
-        // Mock the behavior of receiptRepository to return null
-        when(receiptRepository.findByOrderId(orderId)).thenReturn(null);
+        // Act: Call the method under test
+        Optional<Receipt> foundReceipt = receiptService.getReceiptByOrderId(orderId);
 
-        // Act
-        Receipt actualReceipt = receiptService.getReceiptByOrderId(orderId);
-
-        // Assert
-        assertNull(actualReceipt);
+        // Assert: Verify the result
+        assertFalse(foundReceipt.isPresent());
         verify(receiptRepository, times(1)).findByOrderId(orderId);
     }
 }

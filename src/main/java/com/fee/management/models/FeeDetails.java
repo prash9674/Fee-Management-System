@@ -1,82 +1,49 @@
 package com.fee.management.models;
 
-import org.springframework.data.annotation.Id;
-import org.springframework.data.mongodb.core.mapping.Document;
-
-@Document(collection = "feedetails")
 public class FeeDetails {
-    @Id
-    private String id;
-    private String studentId;
-    private double amount;
-    private String paymentMethod;
-    private String term;
-    private String status = "PENDING";
-    private String receiptId;
-    private String createdAt;
+    private double totalFee;
+    private double amountPaid;
 
-    // No-argument constructor
-    public FeeDetails() {
-    }
+    public FeeDetails(double totalFee, double amountPaid, double remainingBalance, String status) {
 
-    //Constructor
-    public FeeDetails(String id, String studentId, double amount, String paymentMethod, String term, String status,
-            String receiptId, String createdAt) {
-        this.id = id;
-        this.studentId = studentId;
-        this.amount = amount;
-        this.paymentMethod = paymentMethod;
-        this.term = term;
+        this.totalFee = totalFee;
+        this.amountPaid = amountPaid;
+        this.remainingBalance = remainingBalance;
         this.status = status;
-        this.receiptId = receiptId;
-        this.createdAt = createdAt;
     }
-    public String getId() {
-        return id;
+
+    public double getTotalFee() {
+        return totalFee;
     }
-    public void setId(String id) {
-        this.id = id;
+
+    public void setTotalFee(double totalFee) {
+        this.totalFee = totalFee;
     }
-    public String getStudentId() {
-        return studentId;
+
+    public double getAmountPaid() {
+        return amountPaid;
     }
-    public void setStudentId(String studentId) {
-        this.studentId = studentId;
+
+    public void setAmountPaid(double amountPaid) {
+        this.amountPaid = amountPaid;
     }
-    public double getAmount() {
-        return amount;
+
+    public double getRemainingBalance() {
+        return remainingBalance;
     }
-    public void setAmount(double amount) {
-        this.amount = amount;
+
+    public void setRemainingBalance(double remainingBalance) {
+        this.remainingBalance = remainingBalance;
     }
-    public String getPaymentMethod() {
-        return paymentMethod;
-    }
-    public void setPaymentMethod(String paymentMethod) {
-        this.paymentMethod = paymentMethod;
-    }
-    public String getTerm() {
-        return term;
-    }
-    public void setTerm(String term) {
-        this.term = term;
-    }
+
     public String getStatus() {
         return status;
     }
+
     public void setStatus(String status) {
         this.status = status;
     }
-    public String getReceiptId() {
-        return receiptId;
-    }
-    public void setReceiptId(String receiptId) {
-        this.receiptId = receiptId;
-    }
-    public String getCreatedAt() {
-        return createdAt;
-    }
-    public void setCreatedAt(String createdAt) {
-        this.createdAt = createdAt;
-    }
+
+    private double remainingBalance;
+    private String status;
 }
