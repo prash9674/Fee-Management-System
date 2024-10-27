@@ -1,46 +1,33 @@
-# Fee-Management-System
-An automated system for managing student fees, payment tracking, and receipt generation
+Get all catalog items
 
-Sample Request and Response 
+GET http://localhost:8080/api/v1/catalog
 
-POST http://localhost:8080/api/v1/fees/pay
 
-Request
 
+Register Student
+
+POST http://localhost:8080/api/v1/users/register
 {
-  "id": "12345",
-  "studentId": "12345",
-  "amount": 500.0,
-  "paymentMethod": "Card",
-  "term": "Summer 2024",
-  "status": "PAID",
-  "createdAt": "{{$isoTimestamp}}"
-}
-
-Response
-
-{
-    "id": "12345",
-    "studentId": "12345",
-    "amount": 500.0,
-    "paymentMethod": "Card",
-    "term": "Summer 2024",
-    "status": "PAID",
-    "receiptId": "REC1729521534272",
-    "createdAt": "2024-10-21T14:38:54.245Z"
+    "name" :"Prashant Kumar",
+    "email" : "abc@gmail.com",
+    "contactNo" : "9768563451",
+    "courseName" : "Java8"
 }
 
 
-GET http://localhost:8080/api/v1/receipts/REC1729521534272
-
-Response
-
 {
-    "id": "6716677e9c4e587f72f23f8e",
-    "orderId": "REC1729521534272",
-    "studentId": "12345",
-    "amount": 500.0,
-    "status": "PAID",
-    "receiptDate": "2024-10-21"
+    "userId": "abc",
+    "name": "Prashant Kumar",
+    "email": "abc@gmail.com",
+    "courseName": "Java8",
+    "contactNo": 9768563451
 }
 
+Get Student details by StudentId
+
+GET http://localhost:8080/api/v1/users/abc@gmail.com
+
+POST form-data - http://localhost:8080/api/v1/fee/payments/collectfees
+
+
+GET http://localhost:8080/api/v1/receipts/REC-1730030456451
