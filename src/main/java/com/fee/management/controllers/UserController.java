@@ -1,7 +1,8 @@
 package com.fee.management.controllers;
 
-import com.fee.management.models.FeeDetails;
+import com.fee.management.models.Payment;
 import com.fee.management.models.User;
+import com.fee.management.services.PaymentService;
 import com.fee.management.services.UserService;
 import io.swagger.v3.oas.annotations.Hidden;
 import io.swagger.v3.oas.annotations.Operation;
@@ -11,15 +12,18 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
 import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/v1/users")
 public class UserController {
     private final UserService userService;
+    private final PaymentService paymentService;
 
-    public UserController(UserService userService) {
+    public UserController(UserService userService, PaymentService paymentService) {
         this.userService = userService;
+        this.paymentService = paymentService;
     }
 
     @Operation(
@@ -45,9 +49,9 @@ public class UserController {
             }
     )
     @GetMapping("/{userId}/fee-details")
-    public ResponseEntity<FeeDetails> getFeeDetailsByUserId(@PathVariable String userId) {
-        Optional<FeeDetails> feeDetails = userService.getFeeDetailsByUserId(userId);
-        return feeDetails.map(ResponseEntity::ok).orElse(ResponseEntity.notFound().build());
+    public ResponseEntity<List<Payment>> getFeeDetailsByUserId(@PathVariable String userId) {
+        List<Payment> payments = paymentService.getPaymentsByStudentId(userId);
+        return ResponseEntity.ok(payments);
     }
 
     @Operation(

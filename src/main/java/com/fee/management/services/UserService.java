@@ -37,15 +37,14 @@ public class UserService {
         List<Payment> payments = paymentService.getPaymentsByStudentId(userId);
 
         if (payments.isEmpty()) {
-            return Optional.of(new FeeDetails(0, 0, 0, "UNPAID"));
+            return Optional.of(new FeeDetails(0, 0, "UNPAID"));
         }
 
         Payment payment = payments.get(0);
         double totalFee = payment.getTotalFee();
         double amountPaid = payment.getAmountPaid();
-        double remainingBalance = payment.getRemainingBalance();
         String status = payment.getStatus();
 
-        return Optional.of(new FeeDetails(totalFee, amountPaid, remainingBalance, status));
+        return Optional.of(new FeeDetails(totalFee, amountPaid, status));
     }
 }

@@ -1,6 +1,5 @@
 package com.fee.management.controllers;
 
-import com.fee.management.models.FeeDetails;
 import com.fee.management.models.Receipt;
 import com.fee.management.services.ReceiptService;
 import com.fee.management.services.UserService;

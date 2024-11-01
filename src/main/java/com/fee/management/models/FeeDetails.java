@@ -3,12 +3,12 @@ package com.fee.management.models;
 public class FeeDetails {
     private double totalFee;
     private double amountPaid;
+    private String status;
 
-    public FeeDetails(double totalFee, double amountPaid, double remainingBalance, String status) {
+    public FeeDetails(double totalFee, double amountPaid, String status) {
 
         this.totalFee = totalFee;
         this.amountPaid = amountPaid;
-        this.remainingBalance = remainingBalance;
         this.status = status;
     }
 
@@ -28,14 +28,6 @@ public class FeeDetails {
         this.amountPaid = amountPaid;
     }
 
-    public double getRemainingBalance() {
-        return remainingBalance;
-    }
-
-    public void setRemainingBalance(double remainingBalance) {
-        this.remainingBalance = remainingBalance;
-    }
-
     public String getStatus() {
         return status;
     }
@@ -44,6 +36,5 @@ public class FeeDetails {
         this.status = status;
     }
 
-    private double remainingBalance;
-    private String status;
+
 }

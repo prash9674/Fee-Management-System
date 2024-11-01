@@ -8,6 +8,7 @@ public class CatalogItem {
     @Id
     private String cid;
     private String courseName;
+    private double fee;
 
     public CatalogItem(String cid, String courseName, double fee) {
         this.cid = cid;
@@ -15,7 +16,7 @@ public class CatalogItem {
         this.fee = fee;
     }
 
-    private double fee;
+
 
     public String getCid() {
         return cid;

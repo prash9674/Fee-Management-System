@@ -1,8 +1,11 @@
 package com.fee.management.services;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.*;
+
 import com.fee.management.models.Receipt;
 import com.fee.management.repositories.ReceiptRepository;
-import com.fee.management.services.ReceiptService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
@@ -12,9 +15,8 @@ import org.mockito.MockitoAnnotations;
 import java.time.LocalDateTime;
 import java.util.Optional;
 
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.*;
 public class ReceiptServiceTest {
+
     @Mock
     private ReceiptRepository receiptRepository;
 
@@ -22,37 +24,44 @@ public class ReceiptServiceTest {
     private ReceiptService receiptService;
 
     @BeforeEach
-    public void setup() {
+    public void setUp() {
         MockitoAnnotations.openMocks(this);
     }
 
     @Test
-    public void testGetReceiptByOrderId_ReceiptExists() {
-        // Arrange: Prepare a sample receipt
-        String orderId = "REC-1730033114686";
-        Receipt receipt = new Receipt(orderId,"abc",4000.0,4000.0, LocalDateTime.now(),"PAID");
+    public void testGetReceiptByOrderId_Found() {
+        String orderId = "ORD-123";
+        Receipt receipt = new Receipt();
+        receipt.setOrderId(orderId);
+        receipt.setStudentId("U101");
+        receipt.setAmountPaid(1500.0);
+        receipt.setTotalFee(2000.0);
+        receipt.setDate(LocalDateTime.now());
+        receipt.setStatus("PAID");
+
         when(receiptRepository.findByOrderId(orderId)).thenReturn(Optional.of(receipt));
 
-        // Act: Call the method under test
         Optional<Receipt> foundReceipt = receiptService.getReceiptByOrderId(orderId);
 
-        // Assert: Verify the result
         assertTrue(foundReceipt.isPresent());
         assertEquals(orderId, foundReceipt.get().getOrderId());
+        assertEquals("U101", foundReceipt.get().getStudentId());
+        assertEquals(1500.0, foundReceipt.get().getAmountPaid());
+        assertEquals(2000.0, foundReceipt.get().getTotalFee());
+        assertEquals("PAID", foundReceipt.get().getStatus());
+
         verify(receiptRepository, times(1)).findByOrderId(orderId);
     }
 
     @Test
-    public void testGetReceiptByOrderId_ReceiptDoesNotExist() {
-        // Arrange: Mock the receiptRepository to return an empty Optional
-        String orderId = "12345";
+    public void testGetReceiptByOrderId_NotFound() {
+        String orderId = "ORD-999";
+
         when(receiptRepository.findByOrderId(orderId)).thenReturn(Optional.empty());
 
-        // Act: Call the method under test
         Optional<Receipt> foundReceipt = receiptService.getReceiptByOrderId(orderId);
 
-        // Assert: Verify the result
-        assertFalse(foundReceipt.isPresent());
+        assertTrue(foundReceipt.isEmpty());
         verify(receiptRepository, times(1)).findByOrderId(orderId);
     }
 }

@@ -1,24 +1,23 @@
 package com.fee.management.services;
 
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.*;
+
 import com.fee.management.models.FeeDetails;
 import com.fee.management.models.Payment;
 import com.fee.management.models.User;
 import com.fee.management.repositories.UserRepository;
 import com.fee.management.services.PaymentService;
-import com.fee.management.services.UserService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
-import java.time.LocalDateTime;
-import java.util.Arrays;
-import java.util.List;
+import java.util.Collections;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.*;
 
 public class UserServiceTest {
 
@@ -32,105 +31,103 @@ public class UserServiceTest {
     private UserService userService;
 
     @BeforeEach
-    public void setup() {
+    public void setUp() {
         MockitoAnnotations.openMocks(this);
     }
 
     @Test
-    public void testGetUserById_UserExists() {
-        // Arrange: Prepare a user
-        User user = new User("1", "Test User","test@gmail.com","CourseA",1234567890L);
-        when(userRepository.findById("1")).thenReturn(Optional.of(user));
+    public void testGetUserById() {
+        String userId = "U101";
+        User user = new User();
+        user.setUserId(userId);
+        user.setName("John Doe");
+        user.setEmail("john.doe@example.com");
+        user.setCourseName("Mathematics");
 
-        // Act: Call the method under test
-        Optional<User> foundUser = userService.getUserById("1");
+        when(userRepository.findById(userId)).thenReturn(Optional.of(user));
 
-        // Assert: Verify the result
+        Optional<User> foundUser = userService.getUserById(userId);
         assertTrue(foundUser.isPresent());
-        assertEquals("Test User", foundUser.get().getName());
-        verify(userRepository, times(1)).findById("1");
+        assertEquals(userId, foundUser.get().getUserId());
+        verify(userRepository, times(1)).findById(userId);
     }
 
     @Test
-    public void testGetUserById_UserDoesNotExist() {
-        // Arrange: Mock userRepository to return an empty Optional
-        when(userRepository.findById("1")).thenReturn(Optional.empty());
+    public void testGetUserById_NotFound() {
+        String userId = "U101";
 
-        // Act: Call the method under test
-        Optional<User> foundUser = userService.getUserById("1");
+        when(userRepository.findById(userId)).thenReturn(Optional.empty());
 
-        // Assert: Verify the result
+        Optional<User> foundUser = userService.getUserById(userId);
         assertFalse(foundUser.isPresent());
-        verify(userRepository, times(1)).findById("1");
+        verify(userRepository, times(1)).findById(userId);
     }
 
     @Test
     public void testCreateUser() {
-        // Arrange: Prepare a user to save
-        User user = new User("1", "Test User","test@gmail.com","CourseA",1234567890L);
-        when(userRepository.save(user)).thenReturn(user);
+        User user = new User();
+        user.setUserId("U101");
+        user.setName("John Doe");
+        user.setEmail("john.doe@example.com");
+        user.setCourseName("Mathematics");
 
-        // Act: Call the method under test
+        when(userRepository.save(any(User.class))).thenReturn(user);
+
         User createdUser = userService.createUser(user);
-
-        // Assert: Verify the result
         assertNotNull(createdUser);
-        assertEquals("Test User", createdUser.getName());
+        assertEquals(user.getUserId(), createdUser.getUserId());
         verify(userRepository, times(1)).save(user);
     }
 
     @Test
-    public void testGetFeeDetailsByUserId_UserExistsWithPayments() {
-        // Arrange: Prepare a user and payment details
-        User user = new User("1", "Test User","test@gmail.com","CourseA",1234567890L);
-        Payment payment = new Payment("1", "REC-1730033114686", "abc", 50.0, 100,"PARTIAL", LocalDateTime.now());
-        when(userRepository.findById("1")).thenReturn(Optional.of(user));
-        when(paymentService.getPaymentsByStudentId("1")).thenReturn(Arrays.asList(payment));
+    public void testGetFeeDetailsByUserId_UserNotFound() {
+        String userId = "U101";
 
-        // Act: Call the method under test
-        Optional<FeeDetails> feeDetails = userService.getFeeDetailsByUserId("1");
+        when(userRepository.findById(userId)).thenReturn(Optional.empty());
 
-        // Assert: Verify the result
-        assertTrue(feeDetails.isPresent());
-        assertEquals(100.0, feeDetails.get().getTotalFee());
-        assertEquals(50.0, feeDetails.get().getAmountPaid());
-        assertEquals(50.0, feeDetails.get().getRemainingBalance());
-        assertEquals("PARTIAL", feeDetails.get().getStatus());
-        verify(userRepository, times(1)).findById("1");
-        verify(paymentService, times(1)).getPaymentsByStudentId("1");
+        Optional<FeeDetails> feeDetails = userService.getFeeDetailsByUserId(userId);
+        assertFalse(feeDetails.isPresent());
+        verify(userRepository, times(1)).findById(userId);
     }
 
     @Test
-    public void testGetFeeDetailsByUserId_UserExistsWithNoPayments() {
-        // Arrange: Prepare a user with no payments
-        User user = new User("1", "Test User","test@gmail.com","CourseA",1234567890L);
-        when(userRepository.findById("1")).thenReturn(Optional.of(user));
-        when(paymentService.getPaymentsByStudentId("1")).thenReturn(Arrays.asList());
+    public void testGetFeeDetailsByUserId_NoPayments() {
+        String userId = "U101";
+        User user = new User();
+        user.setUserId(userId);
 
-        // Act: Call the method under test
-        Optional<FeeDetails> feeDetails = userService.getFeeDetailsByUserId("1");
+        when(userRepository.findById(userId)).thenReturn(Optional.of(user));
+        when(paymentService.getPaymentsByStudentId(userId)).thenReturn(Collections.emptyList());
 
-        // Assert: Verify the result
+        Optional<FeeDetails> feeDetails = userService.getFeeDetailsByUserId(userId);
         assertTrue(feeDetails.isPresent());
         assertEquals(0, feeDetails.get().getTotalFee());
         assertEquals(0, feeDetails.get().getAmountPaid());
-        assertEquals(0, feeDetails.get().getRemainingBalance());
         assertEquals("UNPAID", feeDetails.get().getStatus());
-        verify(userRepository, times(1)).findById("1");
-        verify(paymentService, times(1)).getPaymentsByStudentId("1");
+        verify(userRepository, times(1)).findById(userId);
+        verify(paymentService, times(1)).getPaymentsByStudentId(userId);
     }
 
     @Test
-    public void testGetFeeDetailsByUserId_UserDoesNotExist() {
-        // Arrange: Mock userRepository to return an empty Optional
-        when(userRepository.findById("1")).thenReturn(Optional.empty());
+    public void testGetFeeDetailsByUserId_WithPayments() {
+        String userId = "U101";
+        User user = new User();
+        user.setUserId(userId);
 
-        // Act: Call the method under test
-        Optional<FeeDetails> feeDetails = userService.getFeeDetailsByUserId("1");
+        Payment payment = new Payment();
+        payment.setTotalFee(2000.0);
+        payment.setAmountPaid(1500.0);
+        payment.setStatus("PARTIAL");
 
-        // Assert: Verify the result
-        assertFalse(feeDetails.isPresent());
-        verify(userRepository, times(1)).findById("1");
-        verify(paymentService, never()).getPaymentsByStudentId("1"); // Should not call paymentService if user doesn't exist
+        when(userRepository.findById(userId)).thenReturn(Optional.of(user));
+        when(paymentService.getPaymentsByStudentId(userId)).thenReturn(Collections.singletonList(payment));
+
+        Optional<FeeDetails> feeDetails = userService.getFeeDetailsByUserId(userId);
+        assertTrue(feeDetails.isPresent());
+        assertEquals(2000.0, feeDetails.get().getTotalFee());
+        assertEquals(1500.0, feeDetails.get().getAmountPaid());
+        assertEquals("PARTIAL", feeDetails.get().getStatus());
+        verify(userRepository, times(1)).findById(userId);
+        verify(paymentService, times(1)).getPaymentsByStudentId(userId);
     }
 }

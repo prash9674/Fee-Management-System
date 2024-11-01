@@ -1,10 +1,14 @@
 package com.fee.management.services;
 
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.*;
+
+import com.fee.management.models.CatalogItem;
 import com.fee.management.models.Payment;
 import com.fee.management.models.Receipt;
+import com.fee.management.repositories.CatalogRepository;
 import com.fee.management.repositories.PaymentRepository;
 import com.fee.management.repositories.ReceiptRepository;
-import com.fee.management.services.PaymentService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
@@ -12,154 +16,112 @@ import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.*;
+
 public class PaymentServiceTest {
+
     @Mock
     private PaymentRepository paymentRepository;
 
     @Mock
     private ReceiptRepository receiptRepository;
 
+    @Mock
+    private CatalogRepository catalogRepository;
+
     @InjectMocks
     private PaymentService paymentService;
 
     @BeforeEach
-    public void setup() {
+    public void setUp() {
         MockitoAnnotations.openMocks(this);
     }
 
     @Test
-    public void testProcessPayment_NewPayment() {
-        // Arrange
-        String studentId = "1";
-        double amount = 100.0;
-        double totalFee = 500.0;
+    public void testProcessPayment_FullyPaid() {
+        String studentId = "U101";
+        String courseName = "Mathematics";
+        double paymentAmount = 2000.0;
 
-        // Mock paymentRepository to return an empty list, simulating no prior payment
-        when(paymentRepository.findByStudentId(studentId)).thenReturn(new ArrayList<>());
+        CatalogItem course = new CatalogItem("C101", courseName, 2000.0);
+        when(catalogRepository.findByCourseName(courseName)).thenReturn(Optional.of(course));
+        when(paymentRepository.findByStudentIdAndOrderId(studentId, "ORD-U101MATHEMATICS"))
+                .thenReturn(Collections.emptyList());
+        when(paymentRepository.save(any(Payment.class))).thenAnswer(i -> i.getArguments()[0]);
+        when(receiptRepository.findByOrderId("ORD-U101MATHEMATICS")).thenReturn(Optional.empty());
 
-        // Configure save to return the Payment object passed to it
-        when(paymentRepository.save(any(Payment.class))).thenAnswer(invocation -> invocation.getArgument(0));
-        when(receiptRepository.save(any(Receipt.class))).thenReturn(new Receipt());  // Mock saving Receipt as well
+        Payment savedPayment = paymentService.processPayment(studentId, courseName, paymentAmount);
 
-        // Act
-        Payment result = paymentService.processPayment(studentId, amount, totalFee);
+        assertNotNull(savedPayment);
+        assertEquals(studentId, savedPayment.getStudentId());
+        assertEquals(paymentAmount, savedPayment.getAmountPaid());
+        assertEquals("PAID", savedPayment.getStatus());
+        assertEquals("Course fee paid in full.", savedPayment.getMessage());
 
-        // Assert
-        assertNotNull(result);  // Ensure result is not null
-        assertEquals(studentId, result.getStudentId());
-        assertEquals(totalFee, result.getTotalFee());
-        assertEquals(amount, result.getAmountPaid());
-        assertEquals("PARTIAL", result.getStatus());  // Status should be "PARTIAL" when amount is less than totalFee
-        assertNotNull(result.getOrderId());  // Ensure an orderId is generated
-
-        // Verify save calls
-        verify(paymentRepository, times(1)).save(result);
+        verify(paymentRepository, times(1)).save(any(Payment.class));
         verify(receiptRepository, times(1)).save(any(Receipt.class));
     }
 
-
     @Test
-    public void testProcessPayment_ExistingPaymentPartial() {
-        // Arrange
-        String studentId = "1";
-        double amount = 100.0;
-        double totalFee = 500.0;
-        Payment existingPayment = new Payment();
-        existingPayment.setStudentId(studentId);
-        existingPayment.setTotalFee(totalFee);
-        existingPayment.setAmountPaid(200.0);
+    public void testProcessPayment_PartialPayment() {
+        String studentId = "U101";
+        String courseName = "Mathematics";
+        double paymentAmount = 1000.0;
 
-        // Mocking the find and save behavior
-        when(paymentRepository.findByStudentId(studentId)).thenReturn(List.of(existingPayment));
-        when(paymentRepository.save(any(Payment.class))).thenAnswer(invocation -> invocation.getArgument(0));
-        when(receiptRepository.save(any(Receipt.class))).thenReturn(new Receipt());  // Mock saving Receipt as well
+        CatalogItem course = new CatalogItem("C101", courseName, 2000.0);
+        when(catalogRepository.findByCourseName(courseName)).thenReturn(Optional.of(course));
+        when(paymentRepository.findByStudentIdAndOrderId(studentId, "ORD-U101MATHEMATICS"))
+                .thenReturn(Collections.emptyList());
+        when(paymentRepository.save(any(Payment.class))).thenAnswer(i -> i.getArguments()[0]);
+        when(receiptRepository.findByOrderId("ORD-U101MATHEMATICS")).thenReturn(Optional.empty());
 
-        // Act
-        Payment result = paymentService.processPayment(studentId, amount, totalFee);
+        Payment savedPayment = paymentService.processPayment(studentId, courseName, paymentAmount);
 
-        // Assert
-        assertNotNull(result);
-        assertEquals(studentId, result.getStudentId());
-        assertEquals(totalFee, result.getTotalFee());
-        assertEquals(300.0, result.getAmountPaid());  // Checks if amount is updated
-        assertEquals("PARTIAL", result.getStatus());  // Checks if status is correctly updated
+        assertNotNull(savedPayment);
+        assertEquals(studentId, savedPayment.getStudentId());
+        assertEquals(paymentAmount, savedPayment.getAmountPaid());
+        assertEquals("PARTIAL", savedPayment.getStatus());
+        assertEquals("Partial payment processed. Remaining balance: 1000.0", savedPayment.getMessage());
 
-        // Verify the save calls
-        verify(paymentRepository, times(1)).save(result);
+        verify(paymentRepository, times(1)).save(any(Payment.class));
         verify(receiptRepository, times(1)).save(any(Receipt.class));
     }
 
-
     @Test
-    public void testProcessPayment_FullPayment() {
-        // Arrange
-        String studentId = "1";
-        double amount = 300.0;
-        double totalFee = 300.0;
-        Payment existingPayment = new Payment();
-        existingPayment.setStudentId(studentId);
-        existingPayment.setTotalFee(totalFee);
-        existingPayment.setAmountPaid(0.0);
+    public void testGetPendingFeeBalance() {
+        String studentId = "U101";
+        double totalFee = 2000.0;
 
-        // Mocking the find and save behavior
-        when(paymentRepository.findByStudentId(studentId)).thenReturn(List.of(existingPayment));
-        when(paymentRepository.save(any(Payment.class))).thenAnswer(invocation -> invocation.getArgument(0));
-        when(receiptRepository.save(any(Receipt.class))).thenReturn(new Receipt());  // Mock saving Receipt as well
-
-        // Act
-        Payment result = paymentService.processPayment(studentId, amount, totalFee);
-
-        // Assert
-        assertNotNull(result);  // Ensure result is not null
-        assertEquals(studentId, result.getStudentId());
-        assertEquals(totalFee, result.getTotalFee());
-        assertEquals(totalFee, result.getAmountPaid());  // Should match full payment amount
-        assertEquals("PAID", result.getStatus());  // Status should be "PAID" when amount meets totalFee
-
-        // Verify the save calls
-        verify(paymentRepository, times(1)).save(result);
-        verify(receiptRepository, times(1)).save(any(Receipt.class));
-    }
-
-
-    @Test
-    public void testGetPaymentsByStudentId_PaymentsExist() {
-        // Arrange
-        String studentId = "1";
         Payment payment1 = new Payment();
-        payment1.setStudentId(studentId);
+        payment1.setAmountPaid(1000.0);
         Payment payment2 = new Payment();
-        payment2.setStudentId(studentId);
-
+        payment2.setAmountPaid(500.0);
         when(paymentRepository.findByStudentId(studentId)).thenReturn(List.of(payment1, payment2));
 
-        // Act
-        List<Payment> result = paymentService.getPaymentsByStudentId(studentId);
+        double pendingBalance = paymentService.getPendingFeeBalance(studentId, "Mathematics", totalFee);
 
-        // Assert
-        assertNotNull(result);
-        assertEquals(2, result.size());
+        assertEquals(500.0, pendingBalance);
         verify(paymentRepository, times(1)).findByStudentId(studentId);
     }
 
     @Test
-    public void testGetPaymentsByStudentId_NoPaymentsExist() {
-        // Arrange
-        String studentId = "1";
-        when(paymentRepository.findByStudentId(studentId)).thenReturn(new ArrayList<>());
+    public void testGetPaymentsByStudentId() {
+        String studentId = "U101";
+        Payment payment = new Payment();
+        payment.setStudentId(studentId);
+        payment.setAmountPaid(1500.0);
 
-        // Act
-        List<Payment> result = paymentService.getPaymentsByStudentId(studentId);
+        when(paymentRepository.findByStudentId(studentId)).thenReturn(List.of(payment));
 
-        // Assert
-        assertNotNull(result);
-        assertTrue(result.isEmpty());
+        List<Payment> payments = paymentService.getPaymentsByStudentId(studentId);
+
+        assertEquals(1, payments.size());
+        assertEquals(studentId, payments.get(0).getStudentId());
+        assertEquals(1500.0, payments.get(0).getAmountPaid());
         verify(paymentRepository, times(1)).findByStudentId(studentId);
     }
 }

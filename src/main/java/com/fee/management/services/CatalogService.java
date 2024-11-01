@@ -5,6 +5,7 @@ import com.fee.management.repositories.CatalogRepository;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Optional;
 
 @Service
 public class CatalogService {
@@ -16,5 +17,9 @@ public class CatalogService {
 
     public List<CatalogItem> getAllCatalogItems() {
         return catalogRepository.findAll();
+    }
+
+    public Optional<CatalogItem> getCatalogItemByCourseName(String courseName) {
+        return catalogRepository.findByCourseName(courseName);
     }
 }

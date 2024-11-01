@@ -9,6 +9,8 @@ public class User {
     @Id
     private String userId; //Student
     private String name;
+    private String email;
+    private String courseName;
 
     public User(String userId, String name, String email, String courseName, Long contactNo) {
         this.userId = userId;
@@ -18,8 +20,10 @@ public class User {
         this.contactNo = contactNo;
     }
 
-    private String email;
-    private String courseName;
+    public User() {
+
+    }
+
 
     public String getCourseName() {
         return courseName;

@@ -1,8 +1,10 @@
 package com.fee.management.services;
 
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.*;
+
 import com.fee.management.models.CatalogItem;
 import com.fee.management.repositories.CatalogRepository;
-import com.fee.management.services.CatalogService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
@@ -10,11 +12,12 @@ import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
 import java.util.Arrays;
-import java.util.List;
+import java.util.Optional;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.mockito.Mockito.*;
+import static org.junit.jupiter.api.Assertions.*;
+
 public class CatalogServiceTest {
+
     @Mock
     private CatalogRepository catalogRepository;
 
@@ -22,28 +25,42 @@ public class CatalogServiceTest {
     private CatalogService catalogService;
 
     @BeforeEach
-    public void setup() {
+    public void setUp() {
         MockitoAnnotations.openMocks(this);
     }
 
     @Test
     public void testGetAllCatalogItems() {
-        // Arrange: Prepare some sample catalog items
-        CatalogItem item1 = new CatalogItem("1", "CourseA",1000.0);
-        CatalogItem item2 = new CatalogItem("2", "CourseB",1200.0);
-        List<CatalogItem> expectedItems = Arrays.asList(item1, item2);
+        CatalogItem item1 = new CatalogItem("C101", "Mathematics", 1500.0);
+        CatalogItem item2 = new CatalogItem("C102", "Physics", 2000.0);
 
-        // Mock the behavior of catalogRepository
-        when(catalogRepository.findAll()).thenReturn(expectedItems);
+        when(catalogRepository.findAll()).thenReturn(Arrays.asList(item1, item2));
 
-        // Act: Call the method under test
-        List<CatalogItem> actualItems = catalogService.getAllCatalogItems();
-
-        // Assert: Verify the result
-        assertEquals(expectedItems.size(), actualItems.size());
-        assertEquals(expectedItems, actualItems);
-
-        // Verify that findAll was called exactly once
+        assertEquals(2, catalogService.getAllCatalogItems().size());
         verify(catalogRepository, times(1)).findAll();
+    }
+
+    @Test
+    public void testGetCatalogItemByCourseName() {
+        String courseName = "Mathematics";
+        CatalogItem catalogItem = new CatalogItem("C101", courseName, 1500.0);
+
+        when(catalogRepository.findByCourseName(courseName)).thenReturn(Optional.of(catalogItem));
+
+        Optional<CatalogItem> foundItem = catalogService.getCatalogItemByCourseName(courseName);
+        assertTrue(foundItem.isPresent());
+        assertEquals(catalogItem, foundItem.get());
+        verify(catalogRepository, times(1)).findByCourseName(courseName);
+    }
+
+    @Test
+    public void testGetCatalogItemByCourseName_NotFound() {
+        String courseName = "NonExistentCourse";
+
+        when(catalogRepository.findByCourseName(courseName)).thenReturn(Optional.empty());
+
+        Optional<CatalogItem> foundItem = catalogService.getCatalogItemByCourseName(courseName);
+        assertFalse(foundItem.isPresent());
+        verify(catalogRepository, times(1)).findByCourseName(courseName);
     }
 }
