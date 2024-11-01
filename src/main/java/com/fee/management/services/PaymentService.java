@@ -18,59 +18,69 @@ public class PaymentService {
     }
 
     public Payment processPayment(String studentId, double amount, double totalFee) {
-        String orderId = "REC-" + System.currentTimeMillis();
+        String orderId = "REC-" + System.currentTimeMillis(); // Unique orderId for each transaction
+        double amountPaid = amount;
+        String message;
+        String status;
+
+        // Retrieve existing payments for this student to calculate cumulative paid amount
         List<Payment> existingPayments = paymentRepository.findByStudentId(studentId);
 
-        Payment payment;
-        String message;
+        double cumulativeAmountPaid = existingPayments.stream()
+                .mapToDouble(Payment::getAmountPaid)
+                .sum();
 
-        if (!existingPayments.isEmpty()) {
-            payment = existingPayments.get(0);
-            double newAmountPaid = payment.getAmountPaid() + amount;
-            payment.setAmountPaid(newAmountPaid);
-
-            if (newAmountPaid >= totalFee) {
-                payment.setStatus("PAID");
-                message = "Course fee paid in full.";
-            } else {
-                payment.setStatus("PARTIAL");
-                message = "Partial payment processed. Remaining balance: " + (totalFee - newAmountPaid);
-            }
-
-            payment.setTimestamp(LocalDateTime.now());
-            payment.setOrderId(orderId); // Ensure to update orderId if necessary
-        } else {
-            payment = new Payment();
-            payment.setStudentId(studentId);
-            payment.setTotalFee(totalFee);
-            payment.setAmountPaid(amount);
-            payment.setTimestamp(LocalDateTime.now());
-
-            if (amount >= totalFee) {
-                payment.setStatus("PAID");
-                message = "Course fee paid in full.";
-            } else {
-                payment.setStatus("PARTIAL");
-                message = "Partial payment processed. Remaining balance: " + (totalFee - amount);
-            }
-
-            payment.setOrderId(orderId);
+        // Check if the course fee has already been paid in full
+        if (cumulativeAmountPaid >= totalFee) {
+            // Create a response indicating that the fee is already paid
+            Payment response = new Payment();
+            response.setStudentId(studentId);
+            response.setTotalFee(totalFee);
+            response.setAmountPaid(0); // No new amount paid in this case
+            response.setStatus("PAID");
+            response.setMessage("No remaining balance for the course as course fee is paid in full.");
+            response.setTimestamp(LocalDateTime.now());
+            return response;
         }
 
-        // Set the message in the payment object
-        payment.setMessage(message); // Set the message here
+        // Calculate the new cumulative amount with this payment
+        double newTotalAmountPaid = cumulativeAmountPaid + amount;
+        double remainingBalance = totalFee - newTotalAmountPaid;
 
+        if (newTotalAmountPaid >= totalFee) {
+            status = "PAID";
+            message = "Course fee paid in full.";
+            remainingBalance = 0.0; // Set remaining balance to 0 if fully paid
+        } else {
+            status = "PARTIAL";
+            message = "Partial payment processed. Remaining balance: " + remainingBalance;
+        }
+
+        // Create a new payment record for this transaction
+        Payment payment = new Payment();
+        payment.setStudentId(studentId);
+        payment.setTotalFee(totalFee);
+        payment.setAmountPaid(amount); // Only the amount of this transaction
+        payment.setTimestamp(LocalDateTime.now());
+        payment.setOrderId(orderId);
+        payment.setStatus(status);
+        payment.setMessage(message);
+
+        // Save the new payment document
+        Payment savedPayment = paymentRepository.save(payment);
+
+        // Create a new receipt for each payment
         Receipt receipt = new Receipt();
-        receipt.setStudentId(payment.getStudentId());
-        receipt.setOrderId(payment.getOrderId());
+        receipt.setStudentId(studentId);
+        receipt.setOrderId(orderId);
         receipt.setDate(LocalDateTime.now());
-        receipt.setStatus(payment.getStatus());
-        receipt.setTotalFee(payment.getTotalFee());
-        receipt.setAmountPaid(payment.getAmountPaid());
+        receipt.setStatus(status);
+        receipt.setTotalFee(totalFee);
+        receipt.setAmountPaid(amount); // Log only the current transaction amount
 
         receiptRepository.save(receipt);
 
-        return paymentRepository.save(payment);
+        return savedPayment;
     }
 
     public List<Payment> getPaymentsByStudentId(String studentId) {
